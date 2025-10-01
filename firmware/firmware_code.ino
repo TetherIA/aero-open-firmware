@@ -338,7 +338,7 @@ void setup() {
   //Syncreadbegin to Start the syncread
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
 
-  //Initialisation of Mutex and Task serial pinned to Core 1
+  // Initialisation of Mutex and Task serial pinned to Core 1
   gBusMux = xSemaphoreCreateMutex();
   gMetricsMux = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(TaskSyncRead_Core1, "SyncRead", 4096, NULL, 1, NULL, 1); // run on Core1

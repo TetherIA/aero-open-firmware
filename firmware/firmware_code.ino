@@ -335,7 +335,7 @@ void setup() {
     delay(20);
   }
 
-  //Syncreadbegin to Start the syncread
+  // SyncReadBegin to start the sync read
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
 
   // Initialisation of Mutex and Task serial pinned to Core 1

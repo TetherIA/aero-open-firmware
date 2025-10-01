@@ -281,7 +281,7 @@ static bool handleHostFrame(uint8_t op) {
     }
 
     case GET_ALL:{
-      //To be Implemented
+      // To be Implemented
     }
 
     case GET_POS: {

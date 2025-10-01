@@ -13,7 +13,7 @@ HLSCL hlscl;
 #define SERIAL2_RX_PIN 2
 
 // ---- Servo IDs (declare at top) ----
-const uint8_t SERVO_IDS[7] = { 0, 1, 2, 5, 8, 11,14 };
+const uint8_t SERVO_IDS[7] = { 0, 1, 2, 5, 8, 11, 14 };
 
 // ---- Constants for Control Code byte ----
 static const uint8_t HOMING   = 0x01;

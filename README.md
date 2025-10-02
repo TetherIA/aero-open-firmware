@@ -1,6 +1,6 @@
 # Aero Hand Lite Firmware
 
-This repository contains the firmware code for the **Aero Lite Hand**, designed for control, homing, calibration, and telemetry of the TetherIA Aero Hand prosthetic.  
+This repository contains the firmware code for the **Aero Hand**, designed for control, homing, calibration, and telemetry of the TetherIA Aero Hand prosthetic.  
 The firmware runs on an **ESP32-S3 (Seeed Studio XIAO ESP32S3)** and communicates with a PC host application via USB serial.
 
 ---

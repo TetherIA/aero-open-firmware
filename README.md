@@ -131,8 +131,9 @@ Each telemetry response is also a **16-byte frame**.
 ## ✅ Summary
 - Communication is always **16-byte aligned**.  
 - Homing (`0x01`), Set ID (`0x03`), and Trim (`0x04`) **send back ACKs**.  
-- Position control (`0x11`) and telemetry (`0x22`–`0x25`) are **one-way commands**.  
-- Extend calibration survives power cycles via NVS storage.  
+- Position control (`0x11`) and ZERO_ALL(`0x02`) are **one-way commands**.
+- Telemetry Commands -GET_POS (`0x22`), GET_VEL (`0x23`), GET_CURR (`0x24`), GET_TEMP (`0x25`) are **data receiving commands**.
+- Extend calibration done using Trim Servo survives power cycles via NVS storage but if you call homing in between it takes the baseline values.  
 - Firmware is **robust to stale/invalid frames** by ignoring them safely.  
 
 ---

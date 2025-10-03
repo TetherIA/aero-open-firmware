@@ -188,7 +188,7 @@ void sendTemps() {
 static void TaskSyncRead_Core1(void *arg) {
   uint8_t  rx[REG_BLOCK_LEN];          // 15 bytes
   uint16_t pos[7], vel[7], cur[7], tmp[7];
-  const TickType_t period = pdMS_TO_TICKS(20);   // Change Frequency of Running here, 5 -200 Hz, 10-100 Hz, 20 -50 Hz
+  const TickType_t period = pdMS_TO_TICKS(20);   // Set polling period (in ms). Example: 5ms = 200Hz, 10ms = 100Hz, 20ms = 50Hz.
   TickType_t nextWake = xTaskGetTickCount();
   for (;;) {
     // try-lock: if control is using the bus, skip this cycle
@@ -406,11 +406,11 @@ void setup() {
     delay(20);
   }
 
-  //Syncreadbegin to Start the syncread
+  // SyncReadBegin to start the sync read
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
 
   //Initialisation of Mutex and Task serial pinned to Core 1
-  gBusMux =xSemaphoreCreateMutex();
+  gBusMux = xSemaphoreCreateMutex();
   gMetricsMux = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(TaskSyncRead_Core1, "SyncRead", 4096, NULL, 1, NULL, 1); // run on Core1
 }

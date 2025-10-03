@@ -20,14 +20,13 @@ const uint8_t SERVO_IDS[7] = { 0, 1, 2, 3, 4, 5, 6 };
 ServoData sd[7];
 
 // ---- Constants for Control Code byte ----
-static const uint8_t HOMING   = 0x01;
-static const uint8_t ZERO_ALL = 0x02;
-static const uint8_t SET_ID   = 0x03;
-static const uint8_t TRIM     = 0x04;
-static const uint8_t CTRL_POS = 0x11;
-static const uint8_t GET_ALL  = 0x21;
-static const uint8_t GET_POS  = 0x22;
-static const uint8_t GET_VEL  = 0x23;
+static const uint8_t HOMING    = 0x01;
+static const uint8_t SET_ID    = 0x02;
+static const uint8_t TRIM      = 0x03;
+static const uint8_t CTRL_POS  = 0x11;
+static const uint8_t GET_ALL   = 0x21;
+static const uint8_t GET_POS   = 0x22;
+static const uint8_t GET_VEL   = 0x23;
 static const uint8_t GET_CURR  = 0x24;
 static const uint8_t GET_TEMP  = 0x25;
 
@@ -53,11 +52,6 @@ struct ServoMetrics {
   uint16_t tmp[7];
 };
 static ServoMetrics gMetrics;
-
-//Initialise Servodata sd Once at startup only
-struct SdInitOnce {
-  SdInitOnce() { resetSdToBaseline(); } 
-} _sd_init_once;
 
 // ----- Semaphores for Metrics and Bus for acquiring lock and release it -----
 static SemaphoreHandle_t gMetricsMux;
@@ -94,7 +88,7 @@ static void sendSetIdAck(uint8_t oldId, uint8_t newId, uint16_t curLimitWord) {
   }
   Serial.write(out, sizeof(out));
 }
-// ---- Helper function to loadManual extends from NVS ------
+// ---- Helper function to save and loadManual extends from NVS ------
 static void loadManualExtendsFromNVS() {
   prefs.begin("hand", true);  // read-only
   for (uint8_t i = 0; i < 7; ++i) {
@@ -103,9 +97,17 @@ static void loadManualExtendsFromNVS() {
     int v = prefs.getInt(key.c_str(), -1);
     if (v >= 0 && v <= 4095) {
       sd[ch].extend_count = v;
-      //Serial.printf("[NVS] ext override id=%u <- %d\n", ch, v);
     }
   }
+}
+static void saveExtendsToNVS() {
+  prefs.begin("hand", false);  // RW
+  for (uint8_t i = 0; i < 7; ++i) {
+    uint8_t ch = SERVO_IDS[i];
+    String kext = "ext" + String(ch);
+    prefs.putInt(kext.c_str(), (int)sd[ch].extend_count);
+  }
+  prefs.end();
 }
 
 // ---- Helper function for u16 to raw 4095 ----
@@ -339,22 +341,8 @@ static bool handleHostFrame(uint8_t op) {
 
     case HOMING: {
       HOMING_start();   // blocks
+      saveExtendsToNVS();
       sendAckFrame(HOMING, nullptr, 0);
-      return true;
-    }
-
-    case ZERO_ALL: {
-      int16_t pos[7];
-      for (int i = 0; i < 7; ++i) {
-        uint8_t ch  = SERVO_IDS[i];
-        int32_t raw32 = sd[ch].extend_count;   // force to EXTEND
-        if (raw32 < 0)    raw32 = 0;
-        if (raw32 > 4095) raw32 = 4095;
-        pos[i] = (int16_t)raw32;
-      }
-      if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
-      hlscl.SyncWritePosEx((uint8_t*)SERVO_IDS, 7, pos, g_speed, g_accel, g_torque);
-      if (gBusMux) xSemaphoreGive(gBusMux);
       return true;
     }
 
@@ -402,6 +390,7 @@ void setup() {
   hlscl.pSerial = &Serial2;
   delay(50);
 
+  resetSdToBaseline();
   prefs.begin("hand", false);
   loadManualExtendsFromNVS();
   // ---- Presence Check on Every Boot -----

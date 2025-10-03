@@ -38,17 +38,6 @@ The firmware uses a **fixed 16-byte frame** for all communication between PC and
 
 ---
 
-### 2. ZERO_ALL (`0x02`)
-- **PC → Firmware:**  
-  - Opcode `0x02`  
-  - Payload: all zeros  
-- **Firmware action:**  
-  - Sends all servos to their stored **extend** position.  
-- **Firmware → PC (ACK):**  
-  - 16 bytes: `[0x02, 0x00, 0x00...0x00]`
-
----
-
 ### 2. SET_ID (`0x02`)
 - **PC → Firmware:**  
   - Opcode `0x02`  

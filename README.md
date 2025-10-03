@@ -28,10 +28,12 @@ The firmware uses a **fixed 16-byte frame** for all communication between PC and
   - Opcode `0x01`  
   - Payload: all zeros  
 - **Firmware action:**  
-  - Runs the full homing sequence for all servos (thumb & fingers).  
-  - Blocks other commands until finished.  
+  - Runs the **full homing sequence** for all servos (thumb & fingers).  
+  - Each joint is driven until the servo **hits its current limit**; this is used to determine the **extend limit**.  
+  - The firmware calibrates servo motion spans based on measured **extend_count** and **grasp_count**.  
+  - **Blocking call:** during homing, all other commands are ignored until the procedure completes and an ACK is returned.  
 - **Firmware → PC (ACK):**  
-  - 16 bytes: `[0x01, 0x00, 0x00...0x00]`  
+  - `[0x01, 0x00, 14×0x00]`  
   - Indicates homing complete.
 
 ---
@@ -47,35 +49,50 @@ The firmware uses a **fixed 16-byte frame** for all communication between PC and
 
 ---
 
-### 3. SET_ID (`0x03`)
+### 2. SET_ID (`0x02`)
 - **PC → Firmware:**  
-  - Opcode `0x03`  
-  - Payload: contains target ID and current limit request.  
-  - Word 0 (2 bytes): **new ID**  
-  - Word 1 (2 bytes): **current limit (0–1023)**  
+  - Opcode `0x02`  
+  - Payload:  
+    - Word 0 (2 bytes): **new ID** (recommended range: 0–6, since 7 servos)  
+    - Word 1 (2 bytes): **current limit** (0–1023)  
 - **Firmware action:**  
-  - Scans servo bus for first connected servo.  
-  - Updates its EEPROM with new ID and current limit.  
+  - Scans the servo bus for the first connected servo.  
+  - Updates its EEPROM with the new ID and the current limit.  
 - **Firmware → PC (ACK):**  
-  - 16 bytes total:  
-    - `[0x03, 0x00, oldId(2B), newId(2B), currentLimit(2B), rest zeros]`
+  - `[0x02, 0x00, oldId(2B), newId(2B), currentLimit(2B), rest zeros]`  
+- **Notes:**  
+  - IDs must be unique and in the range **0–6**.  
+  - Recommended current limit = **1023 (maximum)** to enable strong grasping power and full servo capability.
+
 
 ---
 
-### 4. TRIM (`0x04`)
+### 3. TRIM (`0x03`)
 - **PC → Firmware:**  
-  - Opcode `0x04`  
+  - Opcode `0x03`  
   - Payload:  
     - Word 0 (2 bytes): Servo channel (0–6)  
     - Word 1 (2 bytes): Degrees offset (+/- 360°)  
 - **Firmware action:**  
-  - Updates the stored **extend_count** for the given channel.  
-  - Persists new value into NVS (survives reboot).  
+  - Adjusts the stored **extend_count** (fully open position) for the specified channel.  
+  - Saves the new extend count in **NVS**, so the calibration is **persistent across reboots**.  
 - **Firmware → PC (ACK):**  
-  - 16 bytes total:  
-    - `[0x04, 0x00, channel(2B), extendCount(2B), rest zeros]`
+  - `[0x03, 0x00, channel(2B), extendCount(2B), rest zeros]`  
+- **Channel Mapping:**  
+  - 0 → Thumb abduction  
+  - 1 → Thumb flexion  
+  - 2 → Thumb tendon  
+  - 3 → Index finger  
+  - 4 → Middle finger  
+  - 5 → Ring finger  
+  - 6 → Pinky finger  
+- **Usage notes:**  
+  - Use TRIM for **fine-tuning the open (extend) position**.  
+  - Avoid large offsets. If you see misalignment after trimming negative (e.g., –50), you can reverse-tune with a positive trim (e.g., +50).  
+  - To restore default calibration, run **HOMING**, which resets values to baseline.
 
 ---
+
 
 ### 5. CTRL_POS (`0x11`)
 - **PC → Firmware:**  
@@ -131,9 +148,11 @@ Each telemetry response is also a **16-byte frame**.
 ## ✅ Summary
 - Communication is always **16-byte aligned**.  
 - Homing (`0x01`), Set ID (`0x03`), and Trim (`0x04`) **send back ACKs**.  
-- Position control (`0x11`) and ZERO_ALL(`0x02`) are **one-way commands**.
+- Position control (`0x11`) is **one-way command**.
 - Telemetry Commands -GET_POS (`0x22`), GET_VEL (`0x23`), GET_CURR (`0x24`), GET_TEMP (`0x25`) are **data receiving commands**.
 - Extend calibration done using Trim Servo survives power cycles via NVS storage but if you call homing in between it takes the baseline values.  
 - Firmware is **robust to stale/invalid frames** by ignoring them safely.  
+- **Trim adjustments persist across reboots**. Use **HOMING** to reset calibration.  
+- GUI **Zero All** = shortcut for sending `CTRL_POS` with all channels → extend.  
 
 ---

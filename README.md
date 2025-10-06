@@ -95,6 +95,13 @@ The firmware uses a **fixed 16-byte frame** for all communication between PC and
 
 ---
 
+
+
+### 6. CTRL_TOR (`0x12`)
+- **PC → Firmware:**  
+  - Opcode `0x12`  
+  - To be Implemented
+---
 ### 6. Telemetry / GET Modes
 The firmware supports batched telemetry reads via **SyncRead**.
 

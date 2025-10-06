@@ -136,7 +136,7 @@ static inline uint16_t mapRawToU16(uint8_t servoId, uint16_t raw) {
   int32_t span = gra - ext;
   if (span == 0) return 0;  // avoid divide-by-zero
   int32_t val = ((int32_t)(raw - ext) * 65535L) / span;
-  //Clamp
+  // Clamp
   if (val < 0) val = 0;
   if (val > 65535) val = 65535;
   return (uint16_t)val;

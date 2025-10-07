@@ -71,12 +71,12 @@ static bool scanRequireSingleServo(uint8_t* outId, uint8_t requestedNewId) {
   int count = 0;
   if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
   for (int id = SCAN_MIN; id <= SCAN_MAX; ++id) {
-    if (id == BROADCAST_ID) continue;
+    if (id == BROADCAST_ID) continue;        
     (void)hlscl.Ping((uint8_t)id);
     if (!hlscl.getLastError()) {
       if (count == 0) first = (uint8_t)id;
       ++count;
-      if (count > 1) break;  // early exit on second hit
+      if (count > 1) break;                    
     }
   }
   if (gBusMux) xSemaphoreGive(gBusMux);
@@ -89,7 +89,7 @@ static bool scanRequireSingleServo(uint8_t* outId, uint8_t requestedNewId) {
     sendAckFrame(SET_ID, ack6, sizeof(ack6));
     return false;
   }
-  uint8_t ack14[14] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  uint8_t ack14[14] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   sendAckFrame(SET_ID, ack14, sizeof(ack14));
   return false;
 }
@@ -267,7 +267,7 @@ static bool handleSetIdCmd(const uint8_t* payload) {
   uint8_t  newId    = (uint8_t)(w0 & 0xFF);
   uint16_t reqLimit = (w1 > 1023) ? 1023 : w1;
   // Invalid newId → ACK with oldId=0xFF, newId, cur=0
-  if (newId > 253) {
+  if (newId > 253 || newId ==BROADCAST_ID) {
     uint8_t ack[6] = { 0xFF, 0x00, newId, 0x00, 0x00, 0x00 };
     sendAckFrame(SET_ID, ack, sizeof(ack));
     return true;
@@ -275,7 +275,18 @@ static bool handleSetIdCmd(const uint8_t* payload) {
   // Find any servo present
   uint8_t oldId = 0xFF;
   if (!scanRequireSingleServo(&oldId, newId)) return true; 
-  // Program device (current limit + optional ID change)
+  
+  if (newId != oldId) {
+  if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
+  (void)hlscl.Ping(newId);
+  bool taken = !hlscl.getLastError();
+  if (gBusMux) xSemaphoreGive(gBusMux);
+  if (taken) {
+    uint8_t ack14[14] = { oldId, 0x00, newId, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    sendAckFrame(SET_ID, ack14, sizeof(ack14));
+    return true;
+  }
+  }
   if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
   (void)hlscl.unLockEprom(oldId);
   (void)hlscl.writeWord(oldId, REG_CURRENT_LIMIT, reqLimit);

@@ -77,7 +77,7 @@ The firmware uses a **fixed 16-byte frame** for all communication between PC and
   - 6 → Pinky finger  
 - **Usage notes:**  
   - Use TRIM for **fine-tuning the open (extend) position**.  
-  - Avoid large offsets. If you see misalignment after trimming negative (e.g., –50), you can reverse-tune with a positive trim (e.g., +50). Values of Generally +10 or -10 are recommended.
+  - Avoid large offsets. If you see misalignment after trimming negative (e.g., –50), you can reverse-tune with a positive trim (e.g., +50). Generally, values of +10 or -10 are recommended.
   - To restore default calibration, run **HOMING**, which resets values to baseline.
 
 ---
@@ -105,7 +105,7 @@ The firmware uses a **fixed 16-byte frame** for all communication between PC and
 ### 6. Telemetry / GET Modes
 The firmware supports batched telemetry reads via **SyncRead**.
 
-- **GET_POS (`0x22`)** → Responds with `[pos0..pos6]` (7×u16).  Position Value from firmware are send in range of 0..4096 which represents 0 to 360 degrees of motion
+- **GET_POS (`0x22`)** → Responds with `[pos0..pos6]` (7×u16).  The position value from the firmware is sent in the range 0..4096, which represents 0 to 360 degrees of motion.
 
 - **GET_VEL (`0x23`)** → Responds with `[vel0..vel6]` (7×u16).  
 - **GET_CURR (`0x24`)** → Responds with `[cur0..cur6]` (7×u16).  

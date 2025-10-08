@@ -77,8 +77,12 @@ The choice selects the correct baseline calibration table at build time.
 
 ### B. Build & Flash
 - **PlatformIO**: open the project, pick `seeed_xiao_esp32s3`, then **Upload**.
-- **Arduino IDE**: open `firmware_v0.1.0.ino`, set Board to *XIAO ESP32S3*, then **Upload**.
+- **Arduino IDE**: open `firmware_v0.1.0.ino`, set Board to *XIAO ESP32S3*, then **Upload** (**Note** : If you are using it for the first time, You might need to go under Board manager by pressing Ctrl+Shift+B and then search for esp32, You will find esp32 by Espressif Systems and you need to install them , After Installation - You need to change the board under Tools menu and select XIAO_ESP32S3 from the list.
+
+- <img width="1209" height="959" alt="image" src="https://github.com/user-attachments/assets/9305dd56-5df3-4f53-b719-54a90c7b7bcd" />
+
 - <img width="463" height="283" alt="image" src="https://github.com/user-attachments/assets/48b62680-541a-425d-b0bc-8da7965821cb" />
+
 
   ```
 

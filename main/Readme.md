@@ -45,24 +45,22 @@ The firmware exposes a compact **fixed 16‑byte binary serial protocol** so a h
 ## 2) Repository Layout
 
 ```
-/firmware
-  ├─ firmware_v0.1.0.ino         # main sketch
+/main
+  ├─ firmware_v0.1.0.ino          # main sketch
   ├─ HandConfig.h                 # LEFT_HAND / RIGHT_HAND selection
   ├─ Homing.h                     # homing API + ServoData type
   ├─ Homing.cpp                   # homing implementation + baselines
   └─ (libraries as needed)
-/scripts                          # host-side utilities / GUIs (optional)
-/docs                             # this README and spec notes
 ```
 
 ---
 
-## 3) Hardware & Software Requirements
+## 3) Hardware & Software 
 
 - **MCU**: Seeed Studio XIAO ESP32‑S3 (8 MB flash recommended)
-- **Servos**: Feetech HLSCL / SCServo‑style bus servos (IDs mapped to the 7 joints)
-- **Power**: Servo rail 6–9 V with adequate current, separate from USB 5 V
-- **Tooling**: PlatformIO **or** Arduino IDE / Arduino CLI
+- **Servos**: Feetech HLS3606M (IDs mapped to the 7 joints)
+- **Power**: Power Servo rail at 6 with adequate current (Max Current upto 10A) , separate from USB 5 V
+- **Tools**: Arduino IDE **or** PlatformIO
 
 ---
 
@@ -80,16 +78,11 @@ The choice selects the correct baseline calibration table at build time.
 ### B. Build & Flash
 - **PlatformIO**: open the project, pick `seeed_xiao_esp32s3`, then **Upload**.
 - **Arduino IDE**: open `firmware_v0.1.0.ino`, set Board to *Seeed XIAO ESP32S3*, then **Upload**.
-- **Arduino CLI** (example):
-  ```bash
-  arduino-cli compile --fqbn esp32:esp32:seeed_xiao_esp32s3 --build-property compiler.cpp.extra_flags="-DRIGHT_HAND" .
-  arduino-cli upload  --fqbn esp32:esp32:seeed_xiao_esp32s3 -p COM7 .
   ```
 
 ### C. First Boot
 1. Connect USB, open a serial monitor at the project baud rate (e.g., 1,000,000 or 115,200 as configured).
-2. Issue the **HOMING** command (see §7) or press the board’s zero/homing button if wired.
-3. Send **position frames** from the host (see §7) to move the hand.
+2. On Pressing Reset, Using the Serial monitor make sure that you receive OK from all 7 Servos.
 
 ---
 
@@ -109,7 +102,6 @@ The main loop performs:
 - USB serial polling
 - Fast‑path command decode (see §7)
 - Optional periodic telemetry sampling and printing
-- Debounce/service of a physical **ZERO/HOME** button (if used)
 
 ---
 
@@ -124,11 +116,6 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
   board = seeed_xiao_esp32s3
   framework = arduino
   build_flags = -DRIGHT_HAND      ; or -DLEFT_HAND
-  ```
-
-- **Arduino CLI**:
-  ```bash
-  arduino-cli compile --build-property compiler.cpp.extra_flags="-DLEFT_HAND" .
   ```
 
 - **Arduino IDE**: temporarily uncomment the macro in `HandConfig.h`.
@@ -147,7 +134,6 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
 ### 7.2 Typical opcodes (examples)
 - `0x01` — `HOMING` (no payload or optional params)
 - `0x11` — `CTRL_POS` (write positions): payload is **seven little‑endian `uint16_t`** values, one per servo, representing 0..65535 spanning each channel’s configured **extend ↔ grasp** range.
-- `0x21` — `GET_ALL` (request complete telemetry block)
 - `0x22` — `GET_POS`, `0x23` — `GET_VEL`, `0x24` — `GET_CURR`, `0x25` — `GET_TEMP`
 
 > The exact opcode set can evolve. Check the top of `firmware_v0.1.0.ino` for the authoritative constants used by your build.
@@ -157,7 +143,7 @@ For each channel *i*, the firmware maps a 16‑bit value `u16[i]` to the servo�
 
 ---
 
-## 8) Homing Behavior
+## 8) Homing Behaviour
 
 The homing routine:
 1. Loads the correct baseline via `resetSdToBaseline()`.
@@ -175,7 +161,7 @@ Timing, current limits, and per‑servo special cases (e.g., thumb tendon) are e
 When you want to add a new feature (e.g., LED blink, torque enable/disable, save trim, etc.), follow this pattern:
 
 ### Step 1 — Add a new **control byte** (opcode)
-At the top of `firmware_v0.1.0.ino`, define a unique `#define` or `constexpr` value not already in use.
+At the top of `firmware_v0.1.0.ino`, define a unique `#define` or `static const uint8_t` value not already in use.
 ```c++
 // Example: a simple LED or debug action
 static const uint8_t OP_BLINK = 0x42;   // choose a free byte
@@ -195,13 +181,10 @@ static void handleBlink(uint8_t count) {
 ```
 
 ### Step 3 — Add a `case` in the serial parser
-Consume the fixed‑size frame (we already read byte 0), drain the filler+payload, then call the handler.
+Consume the payload as per use and call the function as per your handler.
 ```c++
 case OP_BLINK: {
-  uint8_t buf[15];                        // filler + payload
-  while (Serial.available() < sizeof(buf)) {}
-  Serial.readBytes((char*)buf, sizeof(buf));
-  uint8_t count = buf[2];                 // interpret first payload byte
+  uint8_t count = buf[1];                 // interpret first payload byte
   handleBlink(count);
   break;
 }
@@ -211,7 +194,7 @@ case OP_BLINK: {
 If the command should acknowledge or return data, write a 16‑byte response using the same framing convention (byte 0 = response opcode, byte 1 = 0x00, bytes 2..15 = payload).
 
 ### Step 5 — Update host tools
-If you maintain a Python GUI or test script, add the new opcode constant, write a small helper to pack/unpack the 16‑byte frame, and (optionally) display the result.
+If you plan to use our aero-open-hand sdk then you might need to add that functionality under aero_hand.py file.
 
 > **Naming tip:** Use `OP_*` for commands initiated by the host and `RX_*` or `OP_RSP_*` for device responses to avoid confusion.
 
@@ -269,8 +252,11 @@ struct ServoData {     // one per channel
 ---
 
 ## 14) License
-Choose a permissive license (e.g., MIT or BSD‑3‑Clause) unless your project requires otherwise. Include a `LICENSE` file at the repo root.
+To be decided,Add about License part here
 
 ---
 
-**Happy building!** If you want this README exported as PDF/HTML for your users, let me know and I’ll add build badges and a printable version.
+**Happy building!** Try something new, break things safely, and share what you learn.
+
+If you have questions, ideas, or requests, feel free to contact me:
+- Email: **harshpanara@tetheria.ai**

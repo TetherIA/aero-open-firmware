@@ -84,8 +84,6 @@ The choice selects the correct baseline calibration table at build time.
 - <img width="463" height="283" alt="image" src="https://github.com/user-attachments/assets/48b62680-541a-425d-b0bc-8da7965821cb" />
 
 
-  ```
-
 ### C. First Boot
 1. Connect USB, open a serial monitor at the project baud rate (e.g., 1,000,000 or 115,200 as configured - default 921600).
 2. On Pressing Reset, Using the Serial monitor make sure that you receive OK from all 7 Servos.

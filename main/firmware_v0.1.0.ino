@@ -66,13 +66,32 @@ extern void runReIdScanAndSet(uint8_t Id, uint16_t currentLimit);
 static volatile int g_lastFoundId; 
 
 // ----- Helper Functions for Set-ID Mode -----
-static int scanFirstServoId() {
+static bool scanRequireSingleServo(uint8_t* outId, uint8_t requestedNewId) {
+  uint8_t first = 0xFF;
+  int count = 0;
+  if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
   for (int id = SCAN_MIN; id <= SCAN_MAX; ++id) {
-    if (id == BROADCAST_ID) continue;
-    int r = hlscl.Ping((uint8_t)id);
-    if (!hlscl.getLastError()) return id;
+    if (id == BROADCAST_ID) continue;        
+    (void)hlscl.Ping((uint8_t)id);
+    if (!hlscl.getLastError()) {
+      if (count == 0) first = (uint8_t)id;
+      ++count;
+      if (count > 1) break;                    
+    }
   }
-  return -1;
+  if (gBusMux) xSemaphoreGive(gBusMux);
+  if (count == 1) {
+    if (outId) *outId = first;
+    return true;
+  }
+  if (count == 0) {
+    uint8_t ack6[6] = { 0xFF, 0x00, requestedNewId, 0x00, 0x00, 0x00 };
+    sendAckFrame(SET_ID, ack6, sizeof(ack6));
+    return false;
+  }
+  uint8_t ack14[14] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  sendAckFrame(SET_ID, ack14, sizeof(ack14));
+  return false;
 }
 static void sendSetIdAck(uint8_t oldId, uint8_t newId, uint16_t curLimitWord) {
   uint16_t vals[7] = {0};
@@ -110,13 +129,31 @@ static void saveExtendsToNVS() {
   prefs.end();
 }
 
-// ---- Helper function for u16 to raw 4095 ----
-static inline uint16_t u16_to_raw4095(uint16_t u) {
-  // Linear map: 0..65535  ->  0..4095
-  // Use 32-bit math to avoid overflow, then clamp just in case.
-  uint32_t raw = (uint32_t)u * 4095u / 65535u;
-  if (raw > 4095u) raw = 4095u;
-  return (uint16_t)raw;
+// ---- Helper function  for raw to U16 and U16 to raw ----
+static inline uint16_t mapRawToU16(uint8_t servoId, uint16_t raw) {
+  int32_t ext  = sd[servoId].extend_count;
+  int32_t gra  = sd[servoId].grasp_count;
+  int32_t span = gra - ext;
+  if (span == 0) return 0;  // avoid divide-by-zero
+  int32_t val = ((int32_t)(raw - ext) * 65535L) / span;
+  //Clamp
+  if (val < 0) val = 0;
+  if (val > 65535) val = 65535;
+  return (uint16_t)val;
+}
+static inline uint16_t mapU16ToRaw(uint8_t servoId, uint16_t u16) {
+  int32_t ext = sd[servoId].extend_count;
+  int32_t gra = sd[servoId].grasp_count;
+  int32_t raw32;
+  if (ext == 0 && gra == 0) {
+    raw32 = ((uint64_t)u16 * 4095u) / 65535u;
+  } else {
+    raw32 = ext + ((int64_t)u16 * (gra - ext)) / 65535LL;
+  }
+  // clamp
+  if (raw32 < 0)    raw32 = 0;
+  if (raw32 > 4095) raw32 = 4095;
+  return (uint16_t)raw32;
 }
 
 // ---- Helper Functions for u16, Decode to sign and copy values in u16 format----
@@ -188,7 +225,7 @@ void sendTemps() {
 static void TaskSyncRead_Core1(void *arg) {
   uint8_t  rx[REG_BLOCK_LEN];          // 15 bytes
   uint16_t pos[7], vel[7], cur[7], tmp[7];
-  const TickType_t period = pdMS_TO_TICKS(20);   // Set polling period (in ms). Example: 5ms = 200Hz, 10ms = 100Hz, 20ms = 50Hz.
+  const TickType_t period = pdMS_TO_TICKS(20);   // Change Frequency of Running here, 5 -200 Hz, 10-100 Hz, 20 -50 Hz
   TickType_t nextWake = xTaskGetTickCount();
   for (;;) {
     // try-lock: if control is using the bus, skip this cycle
@@ -201,11 +238,11 @@ static void TaskSyncRead_Core1(void *arg) {
     hlscl.syncReadPacketTx((uint8_t*)SERVO_IDS, 7, REG_BLOCK_START, REG_BLOCK_LEN);
     for (uint8_t i = 0; i < 7; ++i) {
       if (!hlscl.syncReadPacketRx(SERVO_IDS[i], rx)) { ok = false; break; }
-      // bytes: pos(0..1), vel(2..3 signMag15), tmp(7), cur(13..14 signMag15)
-      pos[i] = leu_u16(&rx[0]);                                    // position (unsigned)
-      vel[i] = decode_signmag15(rx[2], rx[3]);                // velocity (signed)
-      tmp[i] = rx[7];                                            // temperature (unsigned, 1 byte)
-      cur[i] = decode_signmag15(rx[13], rx[14]);              // current (signed)
+      uint16_t raw = leu_u16(&rx[0]);
+      pos[i] = mapRawToU16(SERVO_IDS[i],raw);                     // Position (unsigned)
+      vel[i] = decode_signmag15(rx[2], rx[3]);                  // velocity (signed)
+      tmp[i] = rx[7];                                           // temperature (unsigned, 1 byte)
+      cur[i] = decode_signmag15(rx[13], rx[14]);                // current (signed)
       //vTaskDelay(1);
     }
     if (gBusMux) xSemaphoreGive(gBusMux);
@@ -230,20 +267,26 @@ static bool handleSetIdCmd(const uint8_t* payload) {
   uint8_t  newId    = (uint8_t)(w0 & 0xFF);
   uint16_t reqLimit = (w1 > 1023) ? 1023 : w1;
   // Invalid newId → ACK with oldId=0xFF, newId, cur=0
-  if (newId > 253) {
+  if (newId > 253 || newId ==BROADCAST_ID) {
     uint8_t ack[6] = { 0xFF, 0x00, newId, 0x00, 0x00, 0x00 };
     sendAckFrame(SET_ID, ack, sizeof(ack));
     return true;
   }
   // Find any servo present
-  int found = scanFirstServoId();
-  if (found < 0) {
-    uint8_t ack[6] = { 0xFF, 0x00, newId, 0x00, 0x00, 0x00 };
-    sendAckFrame(SET_ID, ack, sizeof(ack));
+  uint8_t oldId = 0xFF;
+  if (!scanRequireSingleServo(&oldId, newId)) return true; 
+  
+  if (newId != oldId) {
+  if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
+  (void)hlscl.Ping(newId);
+  bool taken = !hlscl.getLastError();
+  if (gBusMux) xSemaphoreGive(gBusMux);
+  if (taken) {
+    uint8_t ack14[14] = { oldId, 0x00, newId, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    sendAckFrame(SET_ID, ack14, sizeof(ack14));
     return true;
   }
-  uint8_t oldId = (uint8_t)found;
-  // Program device
+  }
   if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
   (void)hlscl.unLockEprom(oldId);
   (void)hlscl.writeWord(oldId, REG_CURRENT_LIMIT, reqLimit);
@@ -318,20 +361,9 @@ static bool handleHostFrame(uint8_t op) {
     case CTRL_POS: {
       int16_t pos[7];
       for (int i = 0; i < 7; ++i) {
-        // 0..65535 from payload
         uint16_t u16 = (uint16_t)payload[2*i] | ((uint16_t)payload[2*i+1] << 8);
         uint8_t  ch  = SERVO_IDS[i];
-        uint16_t ext = sd[ch].extend_count;  // open
-        uint16_t gra = sd[ch].grasp_count;   // closed
-        int32_t raw32;
-        if (ext == 0 && gra == 0) {
-          raw32 = (int32_t)(((uint64_t)u16 * 4095u) / 65535u);
-        } else {
-          raw32 = (int32_t)ext + (int32_t)(((int64_t)u16 * ((int32_t)gra - (int32_t)ext)) / 65535LL);
-        }
-        if (raw32 < 0)    raw32 = 0;
-        if (raw32 > 4095) raw32 = 4095;
-        pos[i] = (int16_t)raw32;
+        pos[i] = mapU16ToRaw(ch, u16);
       }
       if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
       hlscl.SyncWritePosEx((uint8_t*)SERVO_IDS, 7, pos, g_speed, g_accel, g_torque);
@@ -406,11 +438,11 @@ void setup() {
     delay(20);
   }
 
-  // SyncReadBegin to start the sync read
+  //Syncreadbegin to Start the syncread
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
 
   //Initialisation of Mutex and Task serial pinned to Core 1
-  gBusMux = xSemaphoreCreateMutex();
+  gBusMux =xSemaphoreCreateMutex();
   gMetricsMux = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(TaskSyncRead_Core1, "SyncRead", 4096, NULL, 1, NULL, 1); // run on Core1
 }

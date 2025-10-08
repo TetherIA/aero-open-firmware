@@ -148,7 +148,7 @@ For each channel *i*, the firmware maps a 16â€‘bit value `u16[i]` to the servoâ€
 
 ---
 
-## 8) Homing Behaviour
+## 8) Homing Behavior
 
 The homing routine:
 1. Loads the correct baseline via `resetSdToBaseline()`.

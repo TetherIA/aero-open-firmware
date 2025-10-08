@@ -77,11 +77,13 @@ The choice selects the correct baseline calibration table at build time.
 
 ### B. Build & Flash
 - **PlatformIO**: open the project, pick `seeed_xiao_esp32s3`, then **Upload**.
-- **Arduino IDE**: open `firmware_v0.1.0.ino`, set Board to *Seeed XIAO ESP32S3*, then **Upload**.
+- **Arduino IDE**: open `firmware_v0.1.0.ino`, set Board to *XIAO ESP32S3*, then **Upload**.
+- <img width="463" height="283" alt="image" src="https://github.com/user-attachments/assets/48b62680-541a-425d-b0bc-8da7965821cb" />
+
   ```
 
 ### C. First Boot
-1. Connect USB, open a serial monitor at the project baud rate (e.g., 1,000,000 or 115,200 as configured).
+1. Connect USB, open a serial monitor at the project baud rate (e.g., 1,000,000 or 115,200 as configured - default 921600).
 2. On Pressing Reset, Using the Serial monitor make sure that you receive OK from all 7 Servos.
 
 ---

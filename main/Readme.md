@@ -257,7 +257,7 @@ struct ServoData {     // one per channel
 ---
 
 ## 14) License
-To be decided,Add about License part here
+To be decided, Add about License part here
 
 ---
 

@@ -59,7 +59,7 @@ The firmware exposes a compact **fixed 16‑byte binary serial protocol** so a h
 
 - **MCU**: Seeed Studio XIAO ESP32‑S3 (8 MB flash recommended)
 - **Servos**: Feetech HLS3606M (IDs mapped to the 7 joints)
-- **Power**: Power Servo rail at 6 with adequate current (Max Current upto 10A) , separate from USB 5 V
+- **Power**: Power Servo rail at 6 with adequate current (Max Current up to 10A) , separate from USB 5 V
 - **Tools**: Arduino IDE **or** PlatformIO
 
 ---

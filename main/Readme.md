@@ -258,5 +258,7 @@ To be decided,Add about License part here
 
 **Happy building!** Try something new, break things safely, and share what you learn.
 
-If you have questions, ideas, or requests, feel free to contact me:
+If you have questions, ideas, or requests, feel free to contact us at:
 - Email: **harshpanara@tetheria.ai**
+- Email: **mohityadav@tetheria.ai**
+- Email: **joedong@tetheria.ai**

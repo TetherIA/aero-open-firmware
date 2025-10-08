@@ -1,6 +1,6 @@
-# Aero Hand Firmware v0.1.0 — README
+# Aero Hand Open Firmware v0.1.0 — README
 
-A reference guide for building, flashing, using, and extending the **Aero Hand** firmware that runs on an ESP32‑S3 (Seeed Studio XIAO ESP32S3) and drives Feetech/SCServo‑style smart servos.
+A reference guide for building, flashing, using, and extending the **Aero Hand Open** firmware that runs on an ESP32‑S3 (Seeed Studio XIAO ESP32S3) and drives Feetech smart servos - Feetech HLS3606M.
 
 ---
 

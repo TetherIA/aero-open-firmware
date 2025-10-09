@@ -4,7 +4,7 @@
 </p>
 
 <div align="center">
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](../LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 </div>
 
 # Aero Hand Open Firmware v0.1.0 — README

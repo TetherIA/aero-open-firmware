@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Aero Hand Open by TetherIA" src="main/assets/logo.png" width="30%">
+  <img alt="Aero Hand Open by TetherIA" src="assets/logo.png" width="30%">
   <br/><br/>
 </p>
 

@@ -3,10 +3,6 @@
   <br/><br/>
 </p>
 
-<div align="center">
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-</div>
-
 # Aero Hand Open Firmware v0.1.0 — README
 
 A reference guide for building, flashing, using, and extending the **Aero Hand Open** firmware that runs on an ESP32‑S3 (Seeed Studio XIAO ESP32S3) and drives Feetech smart servos - Feetech HLS3606M.

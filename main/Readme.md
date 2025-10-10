@@ -264,7 +264,7 @@ If you would like to improve the Firmware or add new features:
 3. Include brief unit/bench tests where possible.
 4. Commit your changes with clear messages.
 5. Push your branch to your fork.
-4. Open a PR with a summary and scope of changes.
+6. Open a PR with a summary and scope of changes.
 
 ---
 

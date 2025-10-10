@@ -262,7 +262,7 @@ If you would like to improve the Firmware or add new features:
 1. Fork and create a feature branch.
 2. Add or modify opcodes and handlers as described in Section 9.
 3. Include brief unit/bench tests where possible.
-4. Commit your changes with clear meassages.
+4. Commit your changes with clear messages.
 5. Push your branch to your fork
 4. Open a PR with a summary and scope of changes.
 

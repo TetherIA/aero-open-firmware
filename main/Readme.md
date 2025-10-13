@@ -1,3 +1,8 @@
+<p align="center">
+  <img alt="Aero Hand Open by TetherIA" src="assets/logo.png" width="30%">
+  <br/><br/>
+</p>
+
 # Aero Hand Open Firmware v0.1.0 — README
 
 A reference guide for building, flashing, using, and extending the **Aero Hand Open** firmware that runs on an ESP32‑S3 (Seeed Studio XIAO ESP32S3) and drives Feetech smart servos - Feetech HLS3606M.
@@ -17,8 +22,9 @@ A reference guide for building, flashing, using, and extending the **Aero Hand O
 - [10) Code Reference (quick lookup)](#10-code-reference-quick-lookup)
 - [11) Safety & Best Practices](#11-safety--best-practices)
 - [12) Troubleshooting](#12-troubleshooting)
-- [13) Contributing](#13-contributing)
+- [13) Contribution](#13-contribution)
 - [14) License](#14-license)
+- [15) Support](#15-Support)
 
 ---
 
@@ -248,22 +254,35 @@ struct ServoData {     // one per channel
 
 ---
 
-## 13) Contributing
+## 13) Contribution
+We welcome community contributions!
+
+If you would like to improve the Firmware or add new features:
+
 1. Fork and create a feature branch.
-2. Add or modify opcodes and handlers as described in §9.
+2. Add or modify opcodes and handlers as described in Section 9.
 3. Include brief unit/bench tests where possible.
-4. Open a PR with a summary and scope of changes.
+4. Commit your changes with clear messages.
+5. Push your branch to your fork.
+6. Open a PR with a summary and scope of changes.
 
 ---
 
 ## 14) License
-To be decided, Add about License part here
+This project is licensed under **Apache License 2.0**
 
 ---
 
-**Happy building!** Try something new, break things safely, and share what you learn.
+## 15) Support 
+If you encounter issues or have feature requests:
+- Open a [GitHub Issue](https://github.com/TetherIA/aero-open-sdk/issues)
+- Contact us at **contact@tetheria.ai**
 
-If you have questions, ideas, or requests, feel free to contact us at:
-- Email: **harshpanara@tetheria.ai**
-- Email: **mohityadav@tetheria.ai**
-- Email: **joedong@tetheria.ai**
+---
+
+<div align="center">
+**Happy building!** Try something new, break things safely, and share what you learn.
+If you find this project useful, please give it a star! ⭐
+
+Built with ❤️ by TetherIA.ai
+</div>

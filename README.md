@@ -137,7 +137,7 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
 
 ## 7) Serial Protocol
 
-**7.1 The firmware uses a fixed 16-byte frame for all communication between PC and firmware.**
+### 7.1 Frame format
 
 ### Frame Structure (TX and RX)
 | Bytes     | Field            | Description                                                                 |

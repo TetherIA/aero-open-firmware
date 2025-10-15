@@ -87,7 +87,7 @@ void zero_all_motors() {
   // Post-homing settling moves
   hlscl.WritePosEx(SERVO_IDS[0], sd[0].extend_count, 2400, 0, 1023);   // Thumb Abduction to extend
   hlscl.WritePosEx(SERVO_IDS[1], sd[1].extend_count, 2400, 0, 1023);   // Thumb Tendon to extend
-  hlscl.WritePosEx(SERVO_IDS[2], sd[2].extend_count, 2400, 0, 1023);   // Thumb Abduction to extend
+  hlscl.WritePosEx(SERVO_IDS[2], sd[2].extend_count, 2400, 0, 1023);   // Thumb Tendon to extend
   hlscl.WritePosEx(SERVO_IDS[3], sd[3].extend_count, 2400, 0, 1023);
   hlscl.WritePosEx(SERVO_IDS[4], sd[4].extend_count, 2400, 0, 1023);   // Middle to extend
   hlscl.WritePosEx(SERVO_IDS[5], sd[5].extend_count, 2400, 0, 1023);

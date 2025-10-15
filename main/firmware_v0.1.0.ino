@@ -224,7 +224,7 @@ void sendTemps() {
 static void TaskSyncRead_Core1(void *arg) {
   uint8_t  rx[REG_BLOCK_LEN];          // 15 bytes
   uint16_t pos[7], vel[7], cur[7], tmp[7];
-  const TickType_t period = pdMS_TO_TICKS(20);   // Change Frequency of Running here, 5 -200 Hz, 10-100 Hz, 20 -50 Hz
+  const TickType_t period = pdMS_TO_TICKS(10);   // Change Frequency of Running here, 5 -200 Hz, 10-100 Hz, 20 -50 Hz
   TickType_t nextWake = xTaskGetTickCount();
   for (;;) {
     // try-lock: if control is using the bus, skip this cycle
@@ -416,6 +416,7 @@ void setup() {
   Serial.begin(921600);
   delay(100);
 
+
   // Servo bus UART @ 1 Mbps
   Serial2.begin(1000000, SERIAL_8N1, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
   hlscl.pSerial = &Serial2;
@@ -424,6 +425,13 @@ void setup() {
   resetSdToBaseline();
   prefs.begin("hand", false);
   loadManualExtendsFromNVS();
+  #if defined(LEFT_HAND)
+    Serial.println("[BOOT] Hand Type: LEFT_HAND");
+  #elif defined(RIGHT_HAND)
+    Serial.println("[BOOT] Hand Type: RIGHT_HAND");
+  #else
+    Serial.println("[BOOT] Hand Type: UNKNOWN");
+  #endif
   // ---- Presence Check on Every Boot -----
   Serial.println("\n[Init] Pinging servos...");
   for (uint8_t i = 0; i < 7; ++i) {
@@ -436,7 +444,6 @@ void setup() {
     }
     delay(20);
   }
-
   //Syncreadbegin to Start the syncread
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
 

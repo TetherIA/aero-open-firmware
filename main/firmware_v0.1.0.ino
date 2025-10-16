@@ -299,15 +299,12 @@ static bool handleSetIdCmd(const uint8_t* payload) {
   if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
   (void)hlscl.unLockEprom(oldId);
   (void)hlscl.writeWord(oldId, REG_CURRENT_LIMIT, reqLimit);
-  delay(10);
   uint8_t targetId = oldId;
   if (newId != oldId) {
     (void)hlscl.writeByte(oldId, REG_ID, newId);   // REG_ID = 0x05
-    delay(10);
     targetId = newId;
   }
   (void)hlscl.LockEprom(targetId);
-  delay(10);
   
   // Read back limit for ACK
   uint16_t curLimitRead = 0;
@@ -422,7 +419,6 @@ static bool handleHostFrame(uint8_t op) {
         for (int i = 0; i < 7; ++i) {
           uint8_t id = SERVO_IDS[i];
           hlscl.ServoMode(id);
-          delay(2);
         }
         g_currentMode = MODE_POS;
       }
@@ -443,14 +439,12 @@ static bool handleHostFrame(uint8_t op) {
         for (int i = 0; i < 7; ++i) {
           uint8_t id = SERVO_IDS[i];
           hlscl.EleMode(id);
-          delay(2); 
         }
         g_currentMode = MODE_TORQUE;
       }
       for (int i = 0; i < 7; ++i) {
         uint8_t id = SERVO_IDS[i];
         hlscl.WriteEle(id, torque[i]);
-        delay(2);
       }
       if (gBusMux) xSemaphoreGive(gBusMux);
       return true;
@@ -510,11 +504,9 @@ void setup() {
   Serial.begin(921600);
   delay(100);
 
-
   // Servo bus UART @ 1 Mbps
   Serial2.begin(1000000, SERIAL_8N1, SERIAL2_RX_PIN, SERIAL2_TX_PIN);
   hlscl.pSerial = &Serial2;
-  delay(50);
 
   resetSdToBaseline();
   prefs.begin("hand", false);
@@ -536,11 +528,12 @@ void setup() {
     } else {
       Serial.print("  ID "); Serial.print(id); Serial.println(": NO REPLY");
     }
-    delay(20);
   }
   //Syncreadbegin to Start the syncread
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
-  
+
+  for (int i = 0; i < 7; ++i){
+  Serial.printf("Servo %d dir=%d\n", i, sd[i].servo_direction);}
   //Initialisation of Mutex and Task serial pinned to Core 1
   gBusMux =xSemaphoreCreateMutex();
   gMetricsMux = xSemaphoreCreateMutex();

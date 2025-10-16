@@ -24,14 +24,17 @@ static const uint8_t HOMING    = 0x01;
 static const uint8_t SET_ID    = 0x02;
 static const uint8_t TRIM      = 0x03;
 static const uint8_t CTRL_POS  = 0x11;
+static const uint8_t CTRL_TOR  = 0x12;
+static const uint8_t SET_SPE   = 0x13;
+static const uint8_t SET_TOR   = 0x14;
 static const uint8_t GET_POS   = 0x22;
 static const uint8_t GET_VEL   = 0x23;
 static const uint8_t GET_CURR  = 0x24;
 static const uint8_t GET_TEMP  = 0x25;
 
 // ---- Defaults for SyncWritePosEx ----
-static uint16_t g_speed[7]  = {2400,2400,2400,2400,2400,2400,2400};
-static uint8_t  g_accel[7]  = {255,255,255,255,255,255,255};     // 0..255
+static uint16_t g_speed[7]  = {32766,32766,32766,32766,32766,32766,32766};
+static uint8_t  g_accel[7]  = {0,0,0,0,0,0,0};     // 0..255
 static uint16_t g_torque[7] = {1023,1023,1023,1023,1023,1023,1023};
 
 // ----- Registers / constants (Mapped as per Feetech Servo HLS3606M) -----
@@ -51,6 +54,13 @@ struct ServoMetrics {
   uint16_t tmp[7];
 };
 static ServoMetrics gMetrics;
+
+// -------- Global Control Mode State  ---------
+enum ControlMode{
+  MODE_POS=0,
+  MODE_TORQUE=2
+};
+static ControlMode g_currentMode = MODE_POS;
 
 // ----- Semaphores for Metrics and Bus for acquiring lock and release it -----
 static SemaphoreHandle_t gMetricsMux;
@@ -345,6 +355,49 @@ static bool handleTrimCmd(const uint8_t* payload) {
   sendAckFrame(TRIM, ack, sizeof(ack));   // 16 bytes on the wire
   return true;
 }
+static bool handleSetSpeedCmd(const uint8_t* payload)
+{
+  uint16_t rawId = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
+  uint16_t rawSpd = (uint16_t)payload[2] | ((uint16_t)payload[3] << 8);
+  if (rawId >= 7) {
+    //invalid index of servo actuator - So give error code (0–6 valid)
+    uint8_t ack[4] = {0xFF, 0xFF, 0x00, 0x00};
+    sendAckFrame(SET_SPE, ack, sizeof(ack));
+    return true;
+  }
+  if (rawSpd > 32766) rawSpd = 32766;  // clamp
+  g_speed[rawId] = rawSpd;
+  // ACK back: servo id and speed
+  uint8_t ack[4];
+  ack[0] = (uint8_t)(rawId & 0xFF);
+  ack[1] = (uint8_t)((rawId >> 8) & 0xFF);
+  ack[2] = (uint8_t)(rawSpd & 0xFF);
+  ack[3] = (uint8_t)((rawSpd >> 8) & 0xFF);
+  sendAckFrame(SET_SPE, ack, sizeof(ack));
+  return true;
+}
+static bool handleSetTorCmd(const uint8_t* payload)
+{
+  uint16_t rawId = (uint16_t)payload[0] | ((uint16_t)payload[1] << 8);
+  uint16_t rawTor = (uint16_t)payload[2] | ((uint16_t)payload[3] << 8);
+  // Validate ID range (0..6)
+  if (rawId >= 7) {
+    uint8_t ack[4] = {0xFF, 0xFF, 0x00, 0x00};  // invalid ID ack
+    sendAckFrame(SET_TOR, ack, sizeof(ack));
+    return true;
+  }
+  if (rawTor > 1023) rawTor = 1023;
+  // Update the per-servo torque value
+  g_torque[rawId] = rawTor;
+  uint8_t ack[4];
+  ack[0] = (uint8_t)(rawId & 0xFF);
+  ack[1] = (uint8_t)((rawId >> 8) & 0xFF);
+  ack[2] = (uint8_t)(rawTor & 0xFF);
+  ack[3] = (uint8_t)((rawTor >> 8) & 0xFF);
+  sendAckFrame(SET_TOR, ack, sizeof(ack));
+  return true;
+}
+
 // ----- Returns true if a valid 16-byte frame was consumed and handled -----
 static bool handleHostFrame(uint8_t op) {
   // Wait until full frame is buffered: filler + 14 payload
@@ -365,9 +418,50 @@ static bool handleHostFrame(uint8_t op) {
         pos[i] = mapU16ToRaw(ch, u16);
       }
       if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
+      if (g_currentMode != MODE_POS) {
+        for (int i = 0; i < 7; ++i) {
+          uint8_t id = SERVO_IDS[i];
+          hlscl.ServoMode(id);
+          delay(2);
+        }
+        g_currentMode = MODE_POS;
+      }
       hlscl.SyncWritePosEx((uint8_t*)SERVO_IDS, 7, pos, g_speed, g_accel, g_torque);
       if (gBusMux) xSemaphoreGive(gBusMux);
       return true;
+    }
+
+    case CTRL_TOR: {
+      uint16_t torque[7];
+      for (int i = 0; i < 7; ++i) {
+        uint16_t u16 = (uint16_t)payload[2*i] | ((uint16_t)payload[2*i + 1] << 8);
+        if (u16 > 1000) u16 = 1000;
+        torque[i] = u16;
+      }
+      if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
+      if (g_currentMode != MODE_TORQUE) {
+        for (int i = 0; i < 7; ++i) {
+          uint8_t id = SERVO_IDS[i];
+          hlscl.EleMode(id);
+          delay(2); 
+        }
+        g_currentMode = MODE_TORQUE;
+      }
+      for (int i = 0; i < 7; ++i) {
+        uint8_t id = SERVO_IDS[i];
+        hlscl.WriteEle(id, torque[i]);
+        delay(2);
+      }
+      if (gBusMux) xSemaphoreGive(gBusMux);
+      return true;
+    }
+
+    case SET_TOR: {
+      return handleSetTorCmd(payload);
+    }
+
+    case SET_SPE: {
+      return handleSetSpeedCmd(payload);
     }
 
     case HOMING: {
@@ -446,7 +540,7 @@ void setup() {
   }
   //Syncreadbegin to Start the syncread
   hlscl.syncReadBegin(sizeof(SERVO_IDS), REG_BLOCK_LEN, /*rx_fix*/ 8);
-
+  
   //Initialisation of Mutex and Task serial pinned to Core 1
   gBusMux =xSemaphoreCreateMutex();
   gMetricsMux = xSemaphoreCreateMutex();

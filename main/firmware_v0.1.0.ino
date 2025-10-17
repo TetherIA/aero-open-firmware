@@ -25,12 +25,12 @@ static const uint8_t SET_ID    = 0x02;
 static const uint8_t TRIM      = 0x03;
 static const uint8_t CTRL_POS  = 0x11;
 static const uint8_t CTRL_TOR  = 0x12;
-static const uint8_t SET_SPE   = 0x13;
-static const uint8_t SET_TOR   = 0x14;
 static const uint8_t GET_POS   = 0x22;
 static const uint8_t GET_VEL   = 0x23;
 static const uint8_t GET_CURR  = 0x24;
 static const uint8_t GET_TEMP  = 0x25;
+static const uint8_t SET_SPE   = 0x31;
+static const uint8_t SET_TOR   = 0x32;
 
 // ---- Defaults for SyncWritePosEx ----
 static uint16_t g_speed[7]  = {32766,32766,32766,32766,32766,32766,32766};

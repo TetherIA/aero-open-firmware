@@ -428,11 +428,14 @@ static bool handleHostFrame(uint8_t op) {
     }
 
     case CTRL_TOR: {
-      uint16_t torque[7];
+      int16_t torque_cmd[7];
       for (int i = 0; i < 7; ++i) {
-        uint16_t u16 = (uint16_t)payload[2*i] | ((uint16_t)payload[2*i + 1] << 8);
-        if (u16 > 1000) u16 = 1000;
-        torque[i] = u16;
+        uint16_t mag = (uint16_t)payload[2*i] | ((uint16_t)payload[2*i + 1] << 8);
+        if (mag > 1000) mag = 1000;
+        uint8_t ch = SERVO_IDS[i];
+        int sgn = (sd[ch].extend_count > sd[ch].grasp_count) ? +1 : -1;
+        if (sd[ch].extend_count == sd[ch].grasp_count) sgn = +1;
+        torque_cmd[i] = (int16_t)(sgn * (int)mag);
       }
       if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
       if (g_currentMode != MODE_TORQUE) {
@@ -444,7 +447,7 @@ static bool handleHostFrame(uint8_t op) {
       }
       for (int i = 0; i < 7; ++i) {
         uint8_t id = SERVO_IDS[i];
-        hlscl.WriteEle(id, torque[i]);
+        hlscl.WriteEle(id, torque_cmd[i]);
       }
       if (gBusMux) xSemaphoreGive(gBusMux);
       return true;

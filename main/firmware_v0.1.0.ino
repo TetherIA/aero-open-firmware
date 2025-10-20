@@ -46,6 +46,9 @@ static uint16_t g_torque[7] = {1023,1023,1023,1023,1023,1023,1023};
 #define REG_BLOCK_LEN          15
 #define REG_BLOCK_START        56
 
+// ------ Flags for switching between mode --------
+static volatile bool g_holdOnNextPos = false;
+
 // ----- Structure for the Metrics of Servo -------
 struct ServoMetrics {
   uint16_t pos[7];
@@ -421,6 +424,15 @@ static bool handleHostFrame(uint8_t op) {
           hlscl.ServoMode(id);
         }
         g_currentMode = MODE_POS;
+        int16_t open_raw[7];
+        for (int i = 0; i < 7; ++i) {
+          uint8_t ch = SERVO_IDS[i];
+          open_raw[i] = (int16_t)sd[ch].extend_count; 
+        }
+        for(int i =0 ;i<7;++i){
+        hlscl.SyncWritePosEx((uint8_t*)SERVO_IDS, 7, open_raw, g_speed, g_accel, g_torque);}
+        if (gBusMux) xSemaphoreGive(gBusMux);
+        return true; 
       }
       hlscl.SyncWritePosEx((uint8_t*)SERVO_IDS, 7, pos, g_speed, g_accel, g_torque);
       if (gBusMux) xSemaphoreGive(gBusMux);
@@ -439,16 +451,11 @@ static bool handleHostFrame(uint8_t op) {
       }
       if (gBusMux) xSemaphoreTake(gBusMux, portMAX_DELAY);
       if (g_currentMode != MODE_TORQUE) {
-        for (int i = 0; i < 7; ++i) {
-          uint8_t id = SERVO_IDS[i];
-          hlscl.EleMode(id);
-        }
+        for (int i = 0; i < 7; ++i) hlscl.EleMode(SERVO_IDS[i]);
         g_currentMode = MODE_TORQUE;
+        g_holdOnNextPos = true;
       }
-      for (int i = 0; i < 7; ++i) {
-        uint8_t id = SERVO_IDS[i];
-        hlscl.WriteEle(id, torque_cmd[i]);
-      }
+      for (int i = 0; i < 7; ++i) hlscl.WriteEle(SERVO_IDS[i], torque_cmd[i]);
       if (gBusMux) xSemaphoreGive(gBusMux);
       return true;
     }

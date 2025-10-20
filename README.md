@@ -157,13 +157,17 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
 | `0x02` | `SET_ID`   | H→D       | `new_id(u16)`, `current_limit(u16)`, rest zeros                                           | `[0x02,0x00, oldId(u16), newId(u16), curLim(u16), rest 0]` |
 | `0x03` | `TRIM`     | H→D       | `channel(u16:0..6)`, `degrees(i16: ±360)`, rest zeros                                     | `[0x03,0x00, channel(u16), extendCount(u16), rest 0]`      |
 | `0x11` | `CTRL_POS` | H→D       | **7×** `u16` (channels 0..6). Range `0..65535` maps to **extend→grasp** span per channel. | *(none)*                                                   |
-| `0x12` | `CTRL_TOR` | H→D       | **Reserved / TBD**                                                                        | *(none)*                                                   |
+| `0x12` | `CTRL_TOR` | H→D       | **Set torque for all servos (7×u16)**                                                     | *(none)*                                                   |
 | `0x22` | `GET_POS`  | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` raw positions (counts 0..4095)                |
 | `0x23` | `GET_VEL`  | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` raw velocities                                |
 | `0x24` | `GET_CURR` | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` currents                                      |
 | `0x25` | `GET_TEMP` | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` temperatures (°C or raw, per build)           |
+| `0x13` | `SET_SPE`  | H→D       | `id(u16)`, `speed(u16)`, rest zeros                                                       | ACK: id, speed                                             |
+| `0x14` | `SET_TOR`  | H→D       | `id(u16)`, `torque(u16)`, rest zeros                                                      | ACK: id, torque                                            |
 
-Version note: If your build used older experimental opcodes for SET_ID/TRIM, update those constants or adjust this table to match your firmware.
+Control Modes Note: 
+> **Recommendation:** We recommend using position control for typical grasping tasks. Advanced users may use torque control mode, but only when the hand is in a position to grab an object. At higher torque values, if any servo exceeds an internal temperature of 80°C, it may temporarily ignore commands as a safety measure until it cools down.
+> **Note:** Torque control is currently implemented in one direction only: from fully open to fully close.
 
 **7.2 Channel Map (0..6)**
 

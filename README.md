@@ -162,8 +162,8 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
 | `0x23` | `GET_VEL`  | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` raw velocities                                |
 | `0x24` | `GET_CURR` | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` currents                                      |
 | `0x25` | `GET_TEMP` | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` temperatures (°C or raw, per build)           |
-| `0x13` | `SET_SPE`  | H→D       | `id(u16)`, `speed(u16)`, rest zeros                                                       | ACK: id, speed                                             |
-| `0x14` | `SET_TOR`  | H→D       | `id(u16)`, `torque(u16)`, rest zeros                                                      | ACK: id, torque                                            |
+| `0x31` | `SET_SPE`  | H→D       | `id(u16)`, `speed(u16)`, rest zeros                                                       | ACK: id, speed                                             |
+| `0x32` | `SET_TOR`  | H→D       | `id(u16)`, `torque(u16)`, rest zeros                                                      | ACK: id, torque                                            |
 
 Control Modes Note: 
 > **Recommendation:** We recommend using position control for typical grasping tasks. Advanced users may use torque control mode, but only when the hand is in a position to grab an object. At higher torque values, if any servo exceeds an internal temperature of 80°C, it may temporarily ignore commands as a safety measure until it cools down.

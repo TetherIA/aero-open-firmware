@@ -157,7 +157,7 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
 | `0x02` | `SET_ID`   | H→D       | `new_id(u16)`, `current_limit(u16)`, rest zeros                                           | `[0x02,0x00, oldId(u16), newId(u16), curLim(u16), rest 0]` |
 | `0x03` | `TRIM`     | H→D       | `channel(u16:0..6)`, `degrees(i16: ±360)`, rest zeros                                     | `[0x03,0x00, channel(u16), extendCount(u16), rest 0]`      |
 | `0x11` | `CTRL_POS` | H→D       | **7×** `u16` (channels 0..6). Range `0..65535` maps to **extend→grasp** span per channel. | *(none)*                                                   |
-| `0x12` | `CTRL_TOR` | H→D       | **Set torque for all servos (7×u16)**                                                     | *(none)*                                                   |
+| `0x12` | `CTRL_TOR` | H→D       | Set torque for all servos (7×u16)                                                     | *(none)*                                                   |
 | `0x22` | `GET_POS`  | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` raw positions (counts 0..4095)                |
 | `0x23` | `GET_VEL`  | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` raw velocities                                |
 | `0x24` | `GET_CURR` | H↔D       | 14×`0x00`                                                                                 | **7×** `u16` currents                                      |

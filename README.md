@@ -85,24 +85,24 @@ The choice selects the correct baseline calibration table at build time.
 
 ### B. Build & Flash
 - **PlatformIO**: On your Visual Studio Code, Once you install the platformIO, Restart your Visual studio Code. You will now see a icon on the left for PlatformIO as below.
-![alt text](image.png)
+![alt text](./main/assets/platformio.png)
 
 
 Once You Reach here, You can press on create a new project . Once you click , It will ask you to enter the Project name and settings, Feel free to choose your desired location and project name,But keep Framework as Arduino and Board as Seeed Studio XIAO ESP32S3.
 
-![alt text](image-1.png)
+![alt text](./main/assets/platformioproject.png)
 
 
 Now it will open the folder with a platformio.ini file. You might need to add a location where you have the FTServo library.  You can use build_flags to build it for the right or left hand. You need to copy paste over the firmware_v0.1.0.ino file in the main.cpp and you also need the header and cpp files under src directory as in the below given image.
-![alt text](image-3.png)
+![alt text](./main/assets/platformioini.png)
 
 
 Now, You again need to go back to that build and upload page by pressing the PlatformIO icon. Here you can see an upload , Once you press the Upload button, It should comoile your files and upload it.
-![alt text](image-4.png)
+![alt text](./main/assets/platformioupload.png)
 
 
 On successful upload, You will see some logs in your terminal window like in the image below.
-![alt text](image-5.png)
+![alt text](./main/assets/platformiologs.png)
 
 
 - **Arduino IDE**: open `firmware_v0.1.0.ino`, set Board to *XIAO ESP32S3*, then **Upload**.  

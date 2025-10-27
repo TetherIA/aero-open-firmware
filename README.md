@@ -94,6 +94,8 @@ Once You Reach here, You can press on create a new project . Once you click , It
 
 
 Now it will open the folder with a platformio.ini file. You might need to add a location where you have the FTServo library.  You can use build_flags to build it for the right or left hand. You need to copy paste over the firmware_v0.1.0.ino file in the main.cpp and you also need the header and cpp files under src directory as in the below given image.
+
+
 ![alt text](./main/assets/platformioini.png)
 
 

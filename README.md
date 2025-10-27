@@ -93,13 +93,13 @@ Once You Reach here, You can press on create a new project . Once you click , It
 ![alt text](./main/assets/platformioproject.png)
 
 
-Now it will open the folder with a platformio.ini file. You might need to add a location where you have the FTServo library.  You can use build_flags to build it for the right or left hand. You need to copy paste over the firmware_v0.1.0.ino file in the main.cpp and you also need the header and cpp files under src directory as in the below given image.
+Now it will open the folder with a `platformio.ini` file. You might need to add a location where you have the FTServo library.  You can use build_flags to build it for the right or left hand. You need to copy paste over the ``firmware_v0.1.0.ino`` file in the ``main.cpp`` and you also need the header and cpp files under src directory as in the below given image.
 
 
 ![alt text](./main/assets/platformioini.png)
 
 
-Now, You again need to go back to that build and upload page by pressing the PlatformIO icon. Here you can see an upload , Once you press the Upload button, It should comoile your files and upload it.
+Now, You again need to go back to that build and upload page by pressing the PlatformIO icon. Here you can see an upload , Once you press the upload button, It should compile your files and upload it.
 ![alt text](./main/assets/platformioupload.png)
 
 
@@ -146,7 +146,7 @@ You can switch hands either by editing `HandConfig.h` **or** using build flags.
 
 - **PlatformIO** (`platformio.ini`):
 - lib_extra_dirs point to the location where you might need the [FTServo_libraries](https://github.com/ftservo/FTServo_Arduino/tree/main).
-- You need to comment both macros of #define LEFT_HAND and #define RIGHT_HAND in HandConfig.h
+- You need to comment both macros of #define LEFT_HAND and #define RIGHT_HAND in ``HandConfig.h``.
 - build_flags will help you to build it for the right hand.
   ```ini
   [env:seeed_xiao_esp32s3]
